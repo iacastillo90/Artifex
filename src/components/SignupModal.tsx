@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Wallet, Mail, HelpCircle } from 'lucide-react';
+import { X, Wallet, Mail, HelpCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { useWallet } from '../hooks/useWallet';
 
 interface SignupModalProps {
   isOpen: boolean;
@@ -12,12 +13,22 @@ export default function SignupModal({ isOpen, onClose, onSignup }: SignupModalPr
   const [email, setEmail] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { connectWallet, isConnecting, error: walletError, isWalletInstalled, walletType } = useWallet();
 
-  const handleWalletConnect = () => {
+  const handleWalletConnect = async () => {
+    if (!isWalletInstalled) {
+      window.open('https://metamask.io/download/', '_blank');
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      onSignup('wallet', '0x1234...5678');
-    }, 1500);
+    const address = await connectWallet();
+
+    if (address) {
+      onSignup('wallet', address);
+    } else {
+      setIsLoading(false);
+    }
   };
 
   const handleEmailSubmit = (e: React.FormEvent) => {
@@ -60,14 +71,24 @@ export default function SignupModal({ isOpen, onClose, onSignup }: SignupModalPr
                   </button>
                 </div>
 
-                {isLoading ? (
+                {walletError && (
+                  <div className="mb-4 bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-300">{walletError}</p>
+                  </div>
+                )}
+
+                {isLoading || isConnecting ? (
                   <div className="py-12 text-center">
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                       className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full mx-auto mb-4"
                     />
-                    <p className="text-gray-400">Conectando de forma segura...</p>
+                    <p className="text-gray-400">
+                      {isWalletInstalled ? 'Abre tu wallet y aprueba la conexión...' : 'Conectando de forma segura...'}
+                    </p>
+                    {walletType && <p className="text-sm text-purple-400 mt-2">Detectado: {walletType}</p>}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -80,9 +101,14 @@ export default function SignupModal({ isOpen, onClose, onSignup }: SignupModalPr
                           <Wallet className="w-6 h-6" />
                         </div>
                         <div className="text-left flex-1">
-                          <h3 className="font-semibold text-lg">Conectar Wallet</h3>
-                          <p className="text-sm text-purple-200">MetaMask, Rainbow, WalletConnect</p>
+                          <h3 className="font-semibold text-lg">
+                            {isWalletInstalled ? 'Conectar Wallet' : 'Instalar Wallet'}
+                          </h3>
+                          <p className="text-sm text-purple-200">
+                            {isWalletInstalled ? 'MetaMask, Rabby, Coinbase Wallet' : 'Se abrirá en una nueva pestaña'}
+                          </p>
                         </div>
+                        {!isWalletInstalled && <ExternalLink className="w-5 h-5 text-purple-300" />}
                       </div>
                     </button>
 
