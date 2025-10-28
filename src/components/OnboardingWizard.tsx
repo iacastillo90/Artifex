@@ -52,7 +52,23 @@ export default function OnboardingWizard({ userData, onComplete }: OnboardingWiz
     setErrors({});
 
     try {
-      console.log('Creating user with data:', {
+      // Primero verificar si ya existe un usuario con esta wallet/email
+      const lookupField = userData.method === 'wallet' ? 'wallet_address' : 'email';
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq(lookupField, userData.data)
+        .maybeSingle();
+
+      if (existingUser) {
+        // Usuario ya existe, hacer login automático
+        console.log('User already exists, logging in:', existingUser);
+        onComplete(existingUser);
+        return;
+      }
+
+      // Si no existe, crear nuevo usuario
+      console.log('Creating new user with data:', {
         username: formData.username.toLowerCase(),
         email: userData.method === 'email' ? userData.data : null,
         wallet_address: userData.method === 'wallet' ? userData.data : null,
@@ -102,8 +118,17 @@ export default function OnboardingWizard({ userData, onComplete }: OnboardingWiz
       console.error('Error in handleComplete:', error);
 
       if (error.code === '23505') {
-        setErrors({ username: 'Este nombre de usuario ya está en uso' });
-        setStep(1);
+        // Código de PostgreSQL para violación de constraint UNIQUE
+        const errorMessage = error.message.toLowerCase();
+
+        if (errorMessage.includes('username')) {
+          setErrors({ username: 'Este nombre de usuario ya está en uso' });
+          setStep(1);
+        } else if (errorMessage.includes('wallet_address')) {
+          setErrors({ general: 'Esta wallet ya tiene una cuenta. Intenta conectar de nuevo.' });
+        } else {
+          setErrors({ general: 'Este email ya está registrado' });
+        }
       } else {
         setErrors({ general: error.message || 'Error al crear el perfil. Por favor intenta nuevamente.' });
       }

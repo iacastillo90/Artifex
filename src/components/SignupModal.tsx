@@ -86,7 +86,11 @@ export default function SignupModal({ isOpen, onClose, onSignup }: SignupModalPr
                       className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full mx-auto mb-4"
                     />
                     <p className="text-gray-400">
-                      {isWalletInstalled ? 'Abre tu wallet y aprueba la conexión...' : 'Conectando de forma segura...'}
+                      {isWalletInstalled
+                        ? isLoading
+                          ? 'Verificando cuenta...'
+                          : 'Abre tu wallet y aprueba la conexión...'
+                        : 'Conectando de forma segura...'}
                     </p>
                     {walletType && <p className="text-sm text-purple-400 mt-2">Detectado: {walletType}</p>}
                   </div>

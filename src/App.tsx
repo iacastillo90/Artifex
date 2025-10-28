@@ -9,6 +9,7 @@ import CreatorProfile from './components/CreatorProfile';
 import SubscribeModal from './components/SubscribeModal';
 import TipModal from './components/TipModal';
 import Vault from './components/Vault';
+import { supabase } from './lib/supabase';
 import type { User } from './types';
 
 function App() {
@@ -19,15 +20,37 @@ function App() {
   const [signupData, setSignupData] = useState<{ method: 'wallet' | 'email'; data: string } | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedCreator, setSelectedCreator] = useState<User | null>(null);
+  const [isCheckingUser, setIsCheckingUser] = useState(false);
 
   const handleGetStarted = () => {
     setShowSignupModal(true);
   };
 
-  const handleSignup = (method: 'wallet' | 'email', data: string) => {
-    setSignupData({ method, data });
-    setShowSignupModal(false);
-    setCurrentPage('onboarding');
+  const handleSignup = async (method: 'wallet' | 'email', data: string) => {
+    setIsCheckingUser(true);
+
+    // Verificar si ya existe un usuario con esta wallet/email
+    const lookupField = method === 'wallet' ? 'wallet_address' : 'email';
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq(lookupField, data)
+      .maybeSingle();
+
+    setIsCheckingUser(false);
+
+    if (existingUser) {
+      // Usuario existe, hacer login automático
+      console.log('User found, logging in automatically:', existingUser);
+      setCurrentUser(existingUser);
+      setShowSignupModal(false);
+      setCurrentPage('dashboard');
+    } else {
+      // Usuario nuevo, ir al onboarding
+      setSignupData({ method, data });
+      setShowSignupModal(false);
+      setCurrentPage('onboarding');
+    }
   };
 
   const handleOnboardingComplete = (user: User) => {
