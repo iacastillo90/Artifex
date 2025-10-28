@@ -3,18 +3,17 @@ import { motion } from 'framer-motion';
 import { Search, Users, TrendingUp, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { User } from '../types';
-import { useNavigate } from 'react-router-dom';
 
 interface ExplorePageProps {
   onBack: () => void;
+  onCreatorClick?: (username: string) => void;
 }
 
-export default function ExplorePage({ onBack }: ExplorePageProps) {
+export default function ExplorePage({ onBack, onCreatorClick }: ExplorePageProps) {
   const [creators, setCreators] = useState<User[]>([]);
   const [filteredCreators, setFilteredCreators] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadCreators();
@@ -52,7 +51,12 @@ export default function ExplorePage({ onBack }: ExplorePageProps) {
   };
 
   const handleCreatorClick = (username: string) => {
-    navigate(`/${username}`);
+    if (onCreatorClick) {
+      onCreatorClick(username);
+    } else {
+      // Fallback: abrir en nueva pestaña
+      window.open(`/${username}`, '_blank');
+    }
   };
 
   return (

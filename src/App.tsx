@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import SignupModal from './components/SignupModal';
 import OnboardingWizard from './components/OnboardingWizard';
@@ -12,6 +12,24 @@ import Vault from './components/Vault';
 import ExplorePage from './components/ExplorePage';
 import { supabase } from './lib/supabase';
 import type { User } from './types';
+
+function CreatorProfileWrapper({
+  onSubscribe,
+  onTip,
+}: {
+  onSubscribe: (creator: User) => void;
+  onTip: (creator: User) => void;
+}) {
+  const { username } = useParams<{ username: string }>();
+
+  return (
+    <CreatorProfile
+      username={username || ''}
+      onSubscribe={onSubscribe}
+      onTip={onTip}
+    />
+  );
+}
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'onboarding' | 'dashboard' | 'create' | 'vault' | 'explore'>('landing');
@@ -114,7 +132,10 @@ function App() {
                 <Vault user={currentUser} onBack={() => setCurrentPage('dashboard')} />
               )}
               {currentPage === 'explore' && (
-                <ExplorePage onBack={() => setCurrentPage(currentUser ? 'dashboard' : 'landing')} />
+                <ExplorePage
+                  onBack={() => setCurrentPage(currentUser ? 'dashboard' : 'landing')}
+                  onCreatorClick={(username) => window.open(`/${username}`, '_blank')}
+                />
               )}
 
               <SignupModal
@@ -143,8 +164,7 @@ function App() {
         <Route
           path="/:username"
           element={
-            <CreatorProfile
-              username={window.location.pathname.slice(1)}
+            <CreatorProfileWrapper
               onSubscribe={handleSubscribe}
               onTip={handleTip}
             />
