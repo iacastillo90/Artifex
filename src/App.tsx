@@ -174,11 +174,15 @@ function App() {
                     isOpen={showSubscribeModal}
                     onClose={() => setShowSubscribeModal(false)}
                     creator={selectedCreator}
+                    currentUser={currentUser}
+                    onBalanceUpdate={handleUserUpdate}
                   />
                   <TipModal
                     isOpen={showTipModal}
                     onClose={() => setShowTipModal(false)}
                     creator={selectedCreator}
+                    currentUser={currentUser}
+                    onBalanceUpdate={handleUserUpdate}
                   />
                 </>
               )}
