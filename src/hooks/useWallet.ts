@@ -100,7 +100,9 @@ export function useWallet() {
       setUsdcBalance(usdc);
       setArtxBalance(artx);
     } catch (error) {
-      console.error('Error loading balances:', error);
+      console.warn('No se pudieron cargar balances blockchain:', error);
+      setUsdcBalance('0');
+      setArtxBalance('0');
     }
   };
 

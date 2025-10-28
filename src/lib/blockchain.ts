@@ -60,19 +60,33 @@ export class BlockchainService {
   async getUSDCBalance(address: string): Promise<string> {
     if (!this.provider || !this.chainId) throw new Error('Wallet no conectada');
 
-    const contracts = getContractAddresses(this.chainId);
-    const usdcContract = new Contract(contracts.USDC, USDC_ABI, this.provider);
-    const balance = await usdcContract.balanceOf(address);
-    return formatUnits(balance, USDC_DECIMALS);
+    try {
+      const contracts = getContractAddresses(this.chainId);
+      if (!contracts.USDC) return '0';
+
+      const usdcContract = new Contract(contracts.USDC, USDC_ABI, this.provider);
+      const balance = await usdcContract.balanceOf(address);
+      return formatUnits(balance, USDC_DECIMALS);
+    } catch (error) {
+      console.warn('Error getting USDC balance:', error);
+      return '0';
+    }
   }
 
   async getARTXBalance(address: string): Promise<string> {
     if (!this.provider || !this.chainId) throw new Error('Wallet no conectada');
 
-    const contracts = getContractAddresses(this.chainId);
-    const artxContract = new Contract(contracts.ARTX_TOKEN, ARTX_ABI, this.provider);
-    const balance = await artxContract.balanceOf(address);
-    return formatUnits(balance, ARTX_DECIMALS);
+    try {
+      const contracts = getContractAddresses(this.chainId);
+      if (!contracts.ARTX_TOKEN) return '0';
+
+      const artxContract = new Contract(contracts.ARTX_TOKEN, ARTX_ABI, this.provider);
+      const balance = await artxContract.balanceOf(address);
+      return formatUnits(balance, ARTX_DECIMALS);
+    } catch (error) {
+      console.warn('Error getting ARTX balance:', error);
+      return '0';
+    }
   }
 
   async approveUSDC(spenderAddress: string, amount: string): Promise<string> {
