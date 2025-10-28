@@ -74,7 +74,7 @@ export default function OnboardingWizard({ userData, onComplete }: OnboardingWiz
         wallet_address: userData.method === 'wallet' ? userData.data : null,
       });
 
-      const { data: newUser, error } = await supabase
+      const { data: newUser, error} = await supabase
         .from('users')
         .insert({
           username: formData.username.toLowerCase(),
@@ -83,6 +83,9 @@ export default function OnboardingWizard({ userData, onComplete }: OnboardingWiz
           bio: formData.bio,
           subscription_price: parseFloat(formData.subscriptionPrice),
           avatar_url: formData.avatar || `https://ui-avatars.com/api/?name=${formData.username}&background=8B5CF6&color=fff`,
+          usdc_balance: 35, // Saldo piloto de $35 USDC
+          artx_balance: 100, // 100 ARTX por crear perfil
+          is_pilot: true,
         })
         .select()
         .single();

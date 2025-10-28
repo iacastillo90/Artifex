@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Compass,
+  Sparkles,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { User, Post, Transaction } from '../types';
@@ -26,10 +27,10 @@ interface DashboardProps {
 
 export default function Dashboard({ user, onNavigate }: DashboardProps) {
   const [earnings, setEarnings] = useState({
-    today: 127.5,
-    thisMonth: 4823,
-    subscribers: 12,
-    posts: 34,
+    today: user.is_pilot ? 0 : 0,
+    thisMonth: user.is_pilot ? 0 : 0,
+    subscribers: 0,
+    posts: 0,
   });
 
   const [recentActivity, setRecentActivity] = useState<any[]>([
@@ -183,22 +184,72 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
                   >
                     ${earnings.today.toFixed(2)}
                   </motion.h2>
-                  <div className="flex items-center gap-1 text-green-400 mb-2">
-                    <TrendingUp className="w-4 h-4" />
-                    <span className="text-sm">+15% vs. ayer</span>
+                  {earnings.today > 0 && (
+                    <div className="flex items-center gap-1 text-green-400 mb-2">
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-sm">+15% vs. ayer</span>
+                    </div>
+                  )}
+                </div>
+                {earnings.today > 0 && (
+                  <div className="mt-4 h-16 flex items-end gap-1">
+                    {[40, 65, 45, 80, 55, 90, 75].map((height, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${height}%` }}
+                        transition={{ delay: 0.6 + i * 0.1, duration: 0.5 }}
+                        className="flex-1 bg-gradient-to-t from-cyan-500 to-purple-500 rounded-t"
+                      />
+                    ))}
                   </div>
+                )}
+                {earnings.today === 0 && (
+                  <p className="mt-4 text-sm text-gray-400">Comienza a crear contenido para ver tus ganancias</p>
+                )}
+              </div>
+            </motion.div>
+
+            {/* ARTX Balance Card - Destacado */}
+            <motion.div
+              variants={itemVariants}
+              className="bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10 border-2 border-purple-500/40 rounded-2xl p-4 sm:p-6 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl" />
+              <div className="relative flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    <span className="text-sm text-gray-400">Balance $ARTX</span>
+                  </div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', delay: 0.3 }}
+                  >
+                    <span className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      {user.artx_balance.toLocaleString()}
+                    </span>
+                    <span className="ml-2 text-xl text-gray-400">ARTX</span>
+                  </motion.div>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-2">
+                    Gana más $ARTX creando contenido, suscribiéndote y dando propinas
+                  </p>
                 </div>
-                <div className="mt-4 h-16 flex items-end gap-1">
-                  {[40, 65, 45, 80, 55, 90, 75].map((height, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ height: 0 }}
-                      animate={{ height: `${height}%` }}
-                      transition={{ delay: 0.6 + i * 0.1, duration: 0.5 }}
-                      className="flex-1 bg-gradient-to-t from-cyan-500 to-purple-500 rounded-t"
-                    />
-                  ))}
-                </div>
+                <motion.div
+                  animate={{
+                    rotate: [0, 10, -10, 0],
+                    scale: [1, 1.1, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                  }}
+                  className="hidden sm:block"
+                >
+                  <Sparkles className="w-16 h-16 text-purple-500/30" />
+                </motion.div>
               </div>
             </motion.div>
 
@@ -208,7 +259,7 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
                   <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center">
                     <Users className="w-5 h-5 text-purple-400" />
                   </div>
-                  <span className="text-sm text-gray-400">Nuevos Suscriptores</span>
+                  <span className="text-sm text-gray-400">Suscriptores</span>
                 </div>
                 <motion.p
                   initial={{ scale: 0 }}
@@ -218,7 +269,11 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
                 >
                   {earnings.subscribers}
                 </motion.p>
-                <p className="text-sm text-green-400">+3 vs. semana pasada</p>
+                {earnings.subscribers > 0 ? (
+                  <p className="text-sm text-green-400">+3 vs. semana pasada</p>
+                ) : (
+                  <p className="text-sm text-gray-500">Crea contenido para obtener suscriptores</p>
+                )}
               </div>
 
               <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] border border-purple-500/20 rounded-xl p-6">

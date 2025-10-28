@@ -8,6 +8,9 @@ export interface User {
   subscription_price: number;
   social_links: Record<string, string>;
   created_at: string;
+  usdc_balance: number;
+  artx_balance: number;
+  is_pilot: boolean;
 }
 
 export interface Post {
@@ -39,13 +42,21 @@ export interface Subscription {
 
 export interface Transaction {
   id: string;
-  type: 'tip' | 'subscription' | 'purchase' | 'withdraw';
+  type: 'tip' | 'subscription' | 'purchase' | 'withdraw' | 'artx_reward';
   from_wallet: string;
   to_wallet: string;
   amount_usd: number;
   amount_crypto: number;
-  crypto_currency: 'USDC' | 'ETH' | 'SOL';
+  crypto_currency: 'USDC' | 'ETH' | 'SOL' | 'ARTX';
   blockchain_tx_hash: string;
   status: 'pending' | 'confirmed' | 'failed';
   created_at: string;
+  reward_reason?: string;
+}
+
+export interface RewardNotification {
+  id: string;
+  amount: number;
+  reason: string;
+  timestamp: number;
 }
