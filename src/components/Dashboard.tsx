@@ -16,6 +16,9 @@ import {
   X,
   Compass,
   Sparkles,
+  Video,
+  Image,
+  Mic,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { User, Post, Transaction } from '../types';
@@ -41,6 +44,33 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'content') {
+      loadUserPosts();
+    }
+  }, [activeTab]);
+
+  const loadUserPosts = async () => {
+    setIsLoadingPosts(true);
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('creator_id', user.id)
+        .order('published_at', { ascending: false });
+
+      if (error) throw error;
+      setUserPosts(data || []);
+      setEarnings(prev => ({ ...prev, posts: data?.length || 0 }));
+    } catch (error) {
+      console.error('Error loading posts:', error);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -160,10 +190,12 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
             animate="visible"
             className="space-y-6"
           >
-            <motion.div variants={itemVariants}>
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Bienvenida, {user.username}</h1>
-              <p className="text-sm sm:text-base text-gray-400">Aquí está tu resumen de hoy</p>
-            </motion.div>
+            {activeTab === 'dashboard' && (
+              <>
+                <motion.div variants={itemVariants}>
+                  <h1 className="text-2xl sm:text-3xl font-bold mb-2">Bienvenida, {user.username}</h1>
+                  <p className="text-sm sm:text-base text-gray-400">Aquí está tu resumen de hoy</p>
+                </motion.div>
 
             <motion.div
               variants={itemVariants}
@@ -400,6 +432,71 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
                 ))}
               </div>
             </motion.div>
+              </>
+            )}
+
+            {/* Mi Contenido Tab */}
+            {activeTab === 'content' && (
+              <>
+                <motion.div variants={itemVariants}>
+                  <h1 className="text-2xl sm:text-3xl font-bold mb-2">Mi Contenido</h1>
+                  <p className="text-sm sm:text-base text-gray-400">
+                    {userPosts.length} {userPosts.length === 1 ? 'post publicado' : 'posts publicados'}
+                  </p>
+                </motion.div>
+
+                {isLoadingPosts ? (
+                  <div className="flex items-center justify-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+                  </div>
+                ) : userPosts.length === 0 ? (
+                  <motion.div
+                    variants={itemVariants}
+                    className="text-center py-20 bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] border border-purple-500/20 rounded-2xl"
+                  >
+                    <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Aún no has publicado contenido</h3>
+                    <p className="text-gray-400 mb-6">Empieza a crear y comparte tu trabajo con el mundo</p>
+                    <button
+                      onClick={() => {
+                        setActiveTab('create');
+                        onNavigate('create');
+                      }}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:scale-105 transition-transform"
+                    >
+                      Publicar Contenido
+                    </button>
+                  </motion.div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {userPosts.map((post) => (
+                      <motion.div
+                        key={post.id}
+                        variants={itemVariants}
+                        className="bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] border border-purple-500/20 rounded-xl overflow-hidden hover:border-purple-500/50 transition-colors group"
+                      >
+                        <div className="aspect-video bg-gradient-to-br from-purple-600/20 to-cyan-500/20 flex items-center justify-center">
+                          {post.content_type === 'video' && <Video className="w-12 h-12 text-purple-400" />}
+                          {post.content_type === 'gallery' && <Image className="w-12 h-12 text-pink-400" />}
+                          {post.content_type === 'article' && <FileText className="w-12 h-12 text-cyan-400" />}
+                          {post.content_type === 'audio' && <Mic className="w-12 h-12 text-green-400" />}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold mb-2 line-clamp-1">{post.title}</h3>
+                          <p className="text-sm text-gray-400 mb-3 line-clamp-2">{post.description}</p>
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span className="capitalize">{post.access_type.replace('_', ' ')}</span>
+                            {post.access_type === 'pay_per_view' && post.price && (
+                              <span className="text-green-400 font-semibold">${post.price}</span>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </motion.div>
         </div>
       </main>
