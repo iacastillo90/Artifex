@@ -9,11 +9,12 @@ import CreatorProfile from './components/CreatorProfile';
 import SubscribeModal from './components/SubscribeModal';
 import TipModal from './components/TipModal';
 import Vault from './components/Vault';
+import ExplorePage from './components/ExplorePage';
 import { supabase } from './lib/supabase';
 import type { User } from './types';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'onboarding' | 'dashboard' | 'create' | 'vault'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'onboarding' | 'dashboard' | 'create' | 'vault' | 'explore'>('landing');
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
@@ -111,6 +112,9 @@ function App() {
               )}
               {currentPage === 'vault' && currentUser && (
                 <Vault user={currentUser} onBack={() => setCurrentPage('dashboard')} />
+              )}
+              {currentPage === 'explore' && (
+                <ExplorePage onBack={() => setCurrentPage(currentUser ? 'dashboard' : 'landing')} />
               )}
 
               <SignupModal

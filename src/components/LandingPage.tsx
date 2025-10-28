@@ -37,7 +37,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
           transition={{ duration: 1 }}
           className="relative"
         >
-          <section className="min-h-screen flex flex-col items-center justify-center px-4 py-20">
+          <section className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
             <motion.div
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -50,13 +50,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="inline-block mb-6"
               >
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600/30 to-cyan-500/30 border border-purple-500/50 text-sm">
+                <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-purple-600/30 to-cyan-500/30 border border-purple-500/50 text-xs sm:text-sm">
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                   Web3 Creator Economy
                 </span>
               </motion.div>
 
-              <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight">
                 Recupera el{' '}
                 <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-400 bg-clip-text text-transparent">
                   20% de tus ingresos
@@ -64,7 +64,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                 .<br />Al instante.
               </h1>
 
-              <p className="text-xl md:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 mb-8 sm:mb-10 lg:mb-12 max-w-3xl mx-auto px-4">
                 La plataforma de creadores donde eres dueño de tu contenido, tu comunidad y tu dinero. Sin censura financiera.
               </p>
 
@@ -73,7 +73,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onGetStarted}
-                  className="group relative px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full font-semibold text-lg overflow-hidden shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-shadow"
+                  className="w-full sm:w-auto group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full font-semibold text-base sm:text-lg overflow-hidden shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-shadow"
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     Reclama tu independencia
@@ -83,7 +83,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
 
                 <button
                   onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+                  className="text-sm sm:text-base text-gray-400 hover:text-white transition-colors flex items-center gap-2"
                 >
                   Ver cómo funciona
                   <ArrowRight className="w-4 h-4" />
@@ -92,7 +92,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             </motion.div>
           </section>
 
-          <section id="calculator" className="min-h-screen flex items-center justify-center px-4 py-20">
+          <section id="calculator" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}

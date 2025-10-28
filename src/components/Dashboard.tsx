@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home,
   Plus,
@@ -12,6 +12,9 @@ import {
   FileText,
   DollarSign,
   Bell,
+  Menu,
+  X,
+  Compass,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { User, Post, Transaction } from '../types';
@@ -36,9 +39,11 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
   ]);
 
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'explore', label: 'Explorar', icon: Compass },
     { id: 'create', label: 'Crear Contenido', icon: Plus },
     { id: 'content', label: 'Mi Contenido', icon: Grid3x3 },
     { id: 'vault', label: 'Bóveda', icon: Wallet },
@@ -62,7 +67,39 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex">
-      <aside className="w-64 bg-[#1A1A1A] border-r border-gray-800 p-6 flex flex-col">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center"
+      >
+        {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+
+      {/* Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <AnimatePresence>
+        <aside
+          className={`
+            fixed lg:static inset-y-0 left-0 z-40
+            w-64 bg-[#1A1A1A] border-r border-gray-800 p-4 sm:p-6 flex flex-col
+            transform transition-transform duration-300 ease-in-out
+            ${
+              isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            }
+          `}
+        >
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
             <img
@@ -112,9 +149,10 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
           <ExternalLink className="w-4 h-4" />
         </a>
       </aside>
+      </AnimatePresence>
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
+      <main className="flex-1 overflow-y-auto lg:ml-0">
+        <div className="p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -122,13 +160,13 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
             className="space-y-6"
           >
             <motion.div variants={itemVariants}>
-              <h1 className="text-3xl font-bold mb-2">Bienvenida, {user.username}</h1>
-              <p className="text-gray-400">Aquí está tu resumen de hoy</p>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Bienvenida, {user.username}</h1>
+              <p className="text-sm sm:text-base text-gray-400">Aquí está tu resumen de hoy</p>
             </motion.div>
 
             <motion.div
               variants={itemVariants}
-              className="bg-gradient-to-br from-purple-600/20 to-cyan-500/20 border border-purple-500/30 rounded-2xl p-8 relative overflow-hidden"
+              className="bg-gradient-to-br from-purple-600/20 to-cyan-500/20 border border-purple-500/30 rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
               <div className="relative">
@@ -141,7 +179,7 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', delay: 0.5 }}
-                    className="text-6xl font-bold"
+                    className="text-4xl sm:text-5xl lg:text-6xl font-bold"
                   >
                     ${earnings.today.toFixed(2)}
                   </motion.h2>
@@ -164,7 +202,7 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
               </div>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="grid md:grid-cols-3 gap-6">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] border border-purple-500/20 rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center">
