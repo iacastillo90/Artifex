@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { blockchainService } from '../lib/blockchain';
 
 interface EthereumProvider {
   request: (args: { method: string; params?: any[] }) => Promise<any>;
@@ -17,9 +18,12 @@ declare global {
 
 export function useWallet() {
   const [account, setAccount] = useState<string | null>(null);
+  const [chainId, setChainId] = useState<number | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [walletType, setWalletType] = useState<string | null>(null);
+  const [usdcBalance, setUsdcBalance] = useState<string>('0');
+  const [artxBalance, setArtxBalance] = useState<string>('0');
 
   useEffect(() => {
     checkIfWalletIsConnected();
@@ -63,38 +67,56 @@ export function useWallet() {
     setError(null);
 
     try {
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts',
-      });
+      const { address, chainId: connectedChainId } = await blockchainService.connect();
 
-      if (accounts.length > 0) {
-        const selectedAccount = accounts[0];
-        setAccount(selectedAccount);
-        detectWalletType();
-        setIsConnecting(false);
-        return selectedAccount;
-      }
+      setAccount(address);
+      setChainId(connectedChainId);
+      detectWalletType();
+
+      await loadBalances(address);
+
+      setIsConnecting(false);
+      return address;
     } catch (err: any) {
       console.error('Error connecting wallet:', err);
 
       if (err.code === 4001) {
         setError('Conexión rechazada. Por favor acepta la solicitud en tu wallet.');
       } else {
-        setError('Error al conectar la wallet. Por favor intenta nuevamente.');
+        setError(err.message || 'Error al conectar la wallet. Por favor intenta nuevamente.');
       }
 
       setIsConnecting(false);
       return null;
     }
+  };
 
-    setIsConnecting(false);
-    return null;
+  const loadBalances = async (address: string) => {
+    try {
+      const [usdc, artx] = await Promise.all([
+        blockchainService.getUSDCBalance(address),
+        blockchainService.getARTXBalance(address),
+      ]);
+      setUsdcBalance(usdc);
+      setArtxBalance(artx);
+    } catch (error) {
+      console.error('Error loading balances:', error);
+    }
+  };
+
+  const refreshBalances = async () => {
+    if (account) {
+      await loadBalances(account);
+    }
   };
 
   const disconnectWallet = () => {
     setAccount(null);
     setWalletType(null);
     setError(null);
+    setChainId(null);
+    setUsdcBalance('0');
+    setArtxBalance('0');
   };
 
   const switchNetwork = async (chainId: string) => {
@@ -118,12 +140,17 @@ export function useWallet() {
 
   return {
     account,
+    chainId,
     isConnecting,
     error,
     walletType,
+    usdcBalance,
+    artxBalance,
     connectWallet,
     disconnectWallet,
     switchNetwork,
+    refreshBalances,
     isWalletInstalled: !!window.ethereum,
+    blockchainService,
   };
 }
