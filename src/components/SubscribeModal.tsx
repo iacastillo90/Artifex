@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, CreditCard, Wallet as WalletIcon, AlertCircle } from 'lucide-react';
+import { X, Check, CreditCard, Wallet as WalletIcon, AlertCircle, Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useWallet } from '../hooks/useWallet';
 import type { User } from '../types';
 
 interface SubscribeModalProps {
@@ -13,10 +14,12 @@ interface SubscribeModalProps {
 }
 
 export default function SubscribeModal({ isOpen, onClose, creator, currentUser, onBalanceUpdate }: SubscribeModalProps) {
-  const [activeTab, setActiveTab] = useState<'crypto' | 'card'>('crypto');
+  const { account, blockchainService, refreshBalances } = useWallet();
+  const [activeTab, setActiveTab] = useState<'pilot' | 'blockchain' | 'card'>('pilot');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
   const [cardData, setCardData] = useState({
     number: '',
     expiry: '',
@@ -24,7 +27,7 @@ export default function SubscribeModal({ isOpen, onClose, creator, currentUser, 
     name: '',
   });
 
-  const handleCryptoSubscribe = async () => {
+  const handlePilotSubscribe = async () => {
     if (!currentUser) {
       setError('Debes iniciar sesión para suscribirte');
       return;
@@ -100,6 +103,64 @@ export default function SubscribeModal({ isOpen, onClose, creator, currentUser, 
     } catch (err) {
       console.error('Error processing subscription:', err);
       setError('Error al procesar la suscripción. Intenta de nuevo.');
+      setIsProcessing(false);
+    }
+  };
+
+  const handleBlockchainSubscribe = async () => {
+    if (!account) {
+      setError('Debes conectar tu wallet primero');
+      return;
+    }
+
+    if (!creator.wallet_address) {
+      setError('El creador no tiene una wallet configurada');
+      return;
+    }
+
+    setError(null);
+    setIsProcessing(true);
+
+    try {
+      const hash = await blockchainService.subscribe(
+        creator.wallet_address,
+        1,
+        creator.subscription_price.toFixed(2)
+      );
+
+      setTxHash(hash);
+
+      await supabase.from('subscriptions').insert({
+        creator_id: creator.id,
+        subscriber_wallet: account,
+        subscriber_email: currentUser?.email,
+        status: 'active',
+      });
+
+      await supabase.from('transactions').insert({
+        type: 'subscription',
+        from_wallet: account,
+        to_wallet: creator.wallet_address,
+        amount_usd: creator.subscription_price,
+        amount_crypto: creator.subscription_price,
+        crypto_currency: 'USDC',
+        blockchain_tx_hash: hash,
+        status: 'confirmed',
+      });
+
+      await refreshBalances();
+      onBalanceUpdate();
+
+      setIsProcessing(false);
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        setShowSuccess(false);
+        onClose();
+      }, 3000);
+    } catch (err: any) {
+      console.error('Error processing blockchain subscription:', err);
+      setError(err.message || 'Error al procesar la transacción blockchain');
       setIsProcessing(false);
     }
   };

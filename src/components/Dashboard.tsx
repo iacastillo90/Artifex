@@ -23,6 +23,8 @@ import {
 import { supabase } from '../lib/supabase';
 import type { User, Post, Transaction } from '../types';
 import SettingsPage from './SettingsPage';
+import WalletButton from './WalletButton';
+import { useWallet } from '../hooks/useWallet';
 
 interface DashboardProps {
   user: User;
@@ -32,6 +34,8 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: DashboardProps) {
+  const { account, usdcBalance, artxBalance } = useWallet();
+
   const [earnings, setEarnings] = useState({
     today: (user.is_pilot ?? false) ? 0 : 0,
     thisMonth: (user.is_pilot ?? false) ? 0 : 0,
@@ -101,13 +105,21 @@ export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: 
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center"
-      >
-        {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-lg border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center"
+        >
+          {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+        <WalletButton />
+      </div>
+
+      {/* Desktop Wallet Button */}
+      <div className="hidden lg:block fixed top-6 right-6 z-50">
+        <WalletButton />
+      </div>
 
       {/* Overlay */}
       <AnimatePresence>
@@ -298,7 +310,7 @@ export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: 
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-5 h-5 text-purple-400" />
-                    <span className="text-sm text-gray-400">Balance $ARTX</span>
+                    <span className="text-sm text-gray-400">Balance $ARTX {user.is_pilot && '(Piloto)'}</span>
                   </div>
                   <motion.div
                     initial={{ scale: 0 }}
@@ -330,6 +342,44 @@ export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: 
                 </motion.div>
               </div>
             </motion.div>
+
+            {/* Blockchain Balance Card - Si wallet conectada */}
+            {account && (
+              <motion.div
+                variants={itemVariants}
+                className="bg-gradient-to-br from-cyan-600/20 to-blue-500/20 border-2 border-cyan-500/40 rounded-2xl p-4 sm:p-6 relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/20 rounded-full blur-3xl" />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5 text-cyan-400" />
+                      <span className="text-sm text-cyan-400">Balances On-Chain</span>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-cyan-500/20 text-cyan-400 rounded-full">
+                      {account.slice(0, 6)}...{account.slice(-4)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-black/30 rounded-xl p-4">
+                      <p className="text-xs text-gray-400 mb-1">USDC</p>
+                      <p className="text-2xl font-bold text-green-400">
+                        {parseFloat(usdcBalance).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="bg-black/30 rounded-xl p-4">
+                      <p className="text-xs text-gray-400 mb-1">ARTX</p>
+                      <p className="text-2xl font-bold text-purple-400">
+                        {parseFloat(artxBalance).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-3">
+                    Balances verificados en blockchain
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
             <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] border border-purple-500/20 rounded-xl p-6">
