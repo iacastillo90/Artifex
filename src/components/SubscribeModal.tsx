@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, CreditCard, Wallet as WalletIcon } from 'lucide-react';
+import { X, Check, CreditCard, Wallet as WalletIcon, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { User } from '../types';
 
@@ -8,12 +8,15 @@ interface SubscribeModalProps {
   isOpen: boolean;
   onClose: () => void;
   creator: User;
+  currentUser: User | null;
+  onBalanceUpdate: () => void;
 }
 
-export default function SubscribeModal({ isOpen, onClose, creator }: SubscribeModalProps) {
+export default function SubscribeModal({ isOpen, onClose, creator, currentUser, onBalanceUpdate }: SubscribeModalProps) {
   const [activeTab, setActiveTab] = useState<'crypto' | 'card'>('crypto');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [cardData, setCardData] = useState({
     number: '',
     expiry: '',
@@ -22,33 +25,83 @@ export default function SubscribeModal({ isOpen, onClose, creator }: SubscribeMo
   });
 
   const handleCryptoSubscribe = async () => {
+    if (!currentUser) {
+      setError('Debes iniciar sesión para suscribirte');
+      return;
+    }
+
+    setError(null);
     setIsProcessing(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const subscriptionPrice = creator.subscription_price;
+      const userBalance = currentUser.usdc_balance || 0;
 
-    await supabase.from('subscriptions').insert({
-      creator_id: creator.id,
-      subscriber_wallet: '0x1234...5678',
-      status: 'active',
-    });
+      if (userBalance < subscriptionPrice) {
+        setError(`Saldo insuficiente. Tienes ${userBalance.toFixed(2)} USDC, necesitas ${subscriptionPrice.toFixed(2)} USDC`);
+        setIsProcessing(false);
+        return;
+      }
 
-    await supabase.from('transactions').insert({
-      type: 'subscription',
-      from_wallet: '0x1234...5678',
-      to_wallet: creator.wallet_address || 'creator_wallet',
-      amount_usd: creator.subscription_price,
-      amount_crypto: creator.subscription_price,
-      crypto_currency: 'USDC',
-      status: 'confirmed',
-    });
+      const protocolFee = subscriptionPrice * 0.01;
+      const creatorAmount = subscriptionPrice - protocolFee;
 
-    setIsProcessing(false);
-    setShowSuccess(true);
+      const newUserBalance = userBalance - subscriptionPrice;
+      const newCreatorBalance = (creator.usdc_balance || 0) + creatorAmount;
+      const artxReward = 20;
+      const newUserArtxBalance = (currentUser.artx_balance || 0) + artxReward;
 
-    setTimeout(() => {
-      setShowSuccess(false);
-      onClose();
-    }, 3000);
+      const { error: userError } = await supabase
+        .from('users')
+        .update({ usdc_balance: newUserBalance, artx_balance: newUserArtxBalance })
+        .eq('id', currentUser.id);
+
+      if (userError) throw userError;
+
+      const { error: creatorError } = await supabase
+        .from('users')
+        .update({ usdc_balance: newCreatorBalance })
+        .eq('id', creator.id);
+
+      if (creatorError) throw creatorError;
+
+      await supabase.from('subscriptions').insert({
+        creator_id: creator.id,
+        subscriber_wallet: currentUser.wallet_address || currentUser.email || 'unknown',
+        subscriber_email: currentUser.email,
+        status: 'active',
+      });
+
+      await supabase.from('transactions').insert({
+        type: 'subscription',
+        from_wallet: currentUser.wallet_address || currentUser.email || 'unknown',
+        to_wallet: creator.wallet_address || creator.email || 'unknown',
+        amount_usd: subscriptionPrice,
+        amount_crypto: subscriptionPrice,
+        crypto_currency: 'USDC',
+        status: 'confirmed',
+      });
+
+      await supabase.from('artx_rewards').insert({
+        user_id: currentUser.id,
+        amount: artxReward,
+        reason: `Suscripción a @${creator.username}`,
+        transaction_hash: '',
+      });
+
+      onBalanceUpdate();
+      setIsProcessing(false);
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        setShowSuccess(false);
+        onClose();
+      }, 3000);
+    } catch (err) {
+      console.error('Error processing subscription:', err);
+      setError('Error al procesar la suscripción. Intenta de nuevo.');
+      setIsProcessing(false);
+    }
   };
 
   const handleCardSubscribe = async (e: React.FormEvent) => {
@@ -123,7 +176,7 @@ export default function SubscribeModal({ isOpen, onClose, creator }: SubscribeMo
                   </div>
 
                   <div className="bg-gradient-to-r from-purple-600/20 to-cyan-500/20 border border-purple-500/30 rounded-xl p-6 mb-6">
-                    <p className="text-4xl font-bold mb-2">${creator.subscription_price}/mes</p>
+                    <p className="text-4xl font-bold mb-2">{creator.subscription_price.toFixed(2)} USDC/mes</p>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-400" />
@@ -137,8 +190,30 @@ export default function SubscribeModal({ isOpen, onClose, creator }: SubscribeMo
                         <Check className="w-4 h-4 text-green-400" />
                         <span>Tu pago va 99% al creador</span>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-purple-400" />
+                        <span>Ganas +20 $ARTX de recompensa</span>
+                      </div>
                     </div>
                   </div>
+
+                  {currentUser && (
+                    <div className="bg-green-600/10 border border-green-500/30 rounded-xl p-4 mb-4">
+                      <p className="text-sm text-gray-400">Tu balance USDC</p>
+                      <p className="text-2xl font-bold text-green-400">{(currentUser.usdc_balance || 0).toFixed(2)} USDC</p>
+                    </div>
+                  )}
+
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-red-600/20 border border-red-500/50 rounded-xl p-4 mb-4 flex items-center gap-3"
+                    >
+                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                      <p className="text-sm text-red-400">{error}</p>
+                    </motion.div>
+                  )}
 
                   <div className="flex gap-2 mb-6">
                     <button
@@ -187,7 +262,7 @@ export default function SubscribeModal({ isOpen, onClose, creator }: SubscribeMo
 
                       <button
                         onClick={handleCryptoSubscribe}
-                        disabled={isProcessing}
+                        disabled={isProcessing || !currentUser}
                         className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isProcessing ? (
@@ -196,8 +271,10 @@ export default function SubscribeModal({ isOpen, onClose, creator }: SubscribeMo
                             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                             className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full mx-auto"
                           />
+                        ) : !currentUser ? (
+                          'Inicia sesión para suscribirte'
                         ) : (
-                          'Conectar Wallet y Pagar'
+                          `Pagar ${creator.subscription_price.toFixed(2)} USDC`
                         )}
                       </button>
                     </div>

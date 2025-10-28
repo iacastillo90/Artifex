@@ -200,6 +200,49 @@ export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: 
                   <p className="text-sm sm:text-base text-gray-400">Aquí está tu resumen de hoy</p>
                 </motion.div>
 
+            {/* USDC Balance Card - Destacado */}
+            <motion.div
+              variants={itemVariants}
+              className="bg-gradient-to-br from-green-600/20 to-cyan-500/20 border-2 border-green-500/40 rounded-2xl p-4 sm:p-6 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-48 h-48 bg-green-500/20 rounded-full blur-3xl" />
+              <div className="relative flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-5 h-5 text-green-400" />
+                    <span className="text-sm text-gray-400">Balance USDC</span>
+                  </div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', delay: 0.3 }}
+                  >
+                    <span className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
+                      {(user.usdc_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <span className="ml-2 text-xl text-gray-400">USDC</span>
+                  </motion.div>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-2">
+                    Disponible para suscripciones, propinas y compras de contenido
+                  </p>
+                </div>
+                <motion.div
+                  animate={{
+                    rotate: [0, 360],
+                    scale: [1, 1.1, 1],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatDelay: 2,
+                  }}
+                  className="hidden sm:block"
+                >
+                  <DollarSign className="w-16 h-16 text-green-500/30" />
+                </motion.div>
+              </div>
+            </motion.div>
+
             <motion.div
               variants={itemVariants}
               className="bg-gradient-to-br from-purple-600/20 to-cyan-500/20 border border-purple-500/30 rounded-2xl p-4 sm:p-6 lg:p-8 relative overflow-hidden"
@@ -208,7 +251,7 @@ export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: 
               <div className="relative">
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="w-6 h-6 text-cyan-400" />
-                  <span className="text-sm text-cyan-400">Ganado hoy</span>
+                  <span className="text-sm text-cyan-400">Ganado hoy (USDC)</span>
                 </div>
                 <div className="flex items-end gap-4">
                   <motion.h2
@@ -217,7 +260,7 @@ export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: 
                     transition={{ type: 'spring', delay: 0.5 }}
                     className="text-4xl sm:text-5xl lg:text-6xl font-bold"
                   >
-                    ${earnings.today.toFixed(2)}
+                    {earnings.today.toFixed(2)} USDC
                   </motion.h2>
                   {earnings.today > 0 && (
                     <div className="flex items-center gap-1 text-green-400 mb-2">
@@ -316,7 +359,7 @@ export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: 
                   <div className="w-10 h-10 bg-cyan-600/20 rounded-lg flex items-center justify-center">
                     <DollarSign className="w-5 h-5 text-cyan-400" />
                   </div>
-                  <span className="text-sm text-gray-400">Total este Mes</span>
+                  <span className="text-sm text-gray-400">Total este Mes (USDC)</span>
                 </div>
                 <motion.p
                   initial={{ scale: 0 }}
@@ -324,7 +367,7 @@ export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: 
                   transition={{ type: 'spring', delay: 0.8 }}
                   className="text-4xl font-bold mb-2"
                 >
-                  ${earnings.thisMonth.toLocaleString()}
+                  {earnings.thisMonth.toLocaleString()} USDC
                 </motion.p>
                 <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
                   <motion.div
