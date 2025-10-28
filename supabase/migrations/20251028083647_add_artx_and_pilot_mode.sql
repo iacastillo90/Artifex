@@ -28,23 +28,31 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'users' AND column_name = 'usdc_balance'
   ) THEN
-    ALTER TABLE users ADD COLUMN usdc_balance decimal DEFAULT 0;
+    ALTER TABLE users ADD COLUMN usdc_balance decimal DEFAULT 0 NOT NULL;
   END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'users' AND column_name = 'artx_balance'
   ) THEN
-    ALTER TABLE users ADD COLUMN artx_balance decimal DEFAULT 0;
+    ALTER TABLE users ADD COLUMN artx_balance decimal DEFAULT 0 NOT NULL;
   END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'users' AND column_name = 'is_pilot'
   ) THEN
-    ALTER TABLE users ADD COLUMN is_pilot boolean DEFAULT false;
+    ALTER TABLE users ADD COLUMN is_pilot boolean DEFAULT false NOT NULL;
   END IF;
 END $$;
+
+-- Update existing users with default values (safety check)
+UPDATE users
+SET
+  usdc_balance = COALESCE(usdc_balance, 0),
+  artx_balance = COALESCE(artx_balance, 0),
+  is_pilot = COALESCE(is_pilot, false)
+WHERE usdc_balance IS NULL OR artx_balance IS NULL OR is_pilot IS NULL;
 
 -- Create artx_rewards table
 CREATE TABLE IF NOT EXISTS artx_rewards (

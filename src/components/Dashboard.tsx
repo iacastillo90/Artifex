@@ -27,8 +27,8 @@ interface DashboardProps {
 
 export default function Dashboard({ user, onNavigate }: DashboardProps) {
   const [earnings, setEarnings] = useState({
-    today: user.is_pilot ? 0 : 0,
-    thisMonth: user.is_pilot ? 0 : 0,
+    today: (user.is_pilot ?? false) ? 0 : 0,
+    thisMonth: (user.is_pilot ?? false) ? 0 : 0,
     subscribers: 0,
     posts: 0,
   });
@@ -228,7 +228,7 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
                     transition={{ type: 'spring', delay: 0.3 }}
                   >
                     <span className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      {user.artx_balance.toLocaleString()}
+                      {(user.artx_balance || 0).toLocaleString()}
                     </span>
                     <span className="ml-2 text-xl text-gray-400">ARTX</span>
                   </motion.div>
