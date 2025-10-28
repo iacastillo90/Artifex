@@ -107,6 +107,25 @@ function App() {
     setCurrentPage('dashboard');
   };
 
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCurrentPage('landing');
+  };
+
+  const handleUserUpdate = async () => {
+    if (!currentUser) return;
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', currentUser.id)
+      .maybeSingle();
+
+    if (data && !error) {
+      setCurrentUser(data);
+    }
+  };
+
   return (
     <BrowserRouter>
       <Routes>
@@ -119,7 +138,12 @@ function App() {
                 <OnboardingWizard userData={signupData} onComplete={handleOnboardingComplete} />
               )}
               {currentPage === 'dashboard' && currentUser && (
-                <Dashboard user={currentUser} onNavigate={handleNavigate} />
+                <Dashboard
+                  user={currentUser}
+                  onNavigate={handleNavigate}
+                  onLogout={handleLogout}
+                  onUserUpdate={handleUserUpdate}
+                />
               )}
               {currentPage === 'create' && currentUser && (
                 <CreateContent

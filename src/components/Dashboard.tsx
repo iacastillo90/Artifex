@@ -22,13 +22,16 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { User, Post, Transaction } from '../types';
+import SettingsPage from './SettingsPage';
 
 interface DashboardProps {
   user: User;
   onNavigate: (page: string) => void;
+  onLogout: () => void;
+  onUserUpdate: () => void;
 }
 
-export default function Dashboard({ user, onNavigate }: DashboardProps) {
+export default function Dashboard({ user, onNavigate, onLogout, onUserUpdate }: DashboardProps) {
   const [earnings, setEarnings] = useState({
     today: (user.is_pilot ?? false) ? 0 : 0,
     thisMonth: (user.is_pilot ?? false) ? 0 : 0,
@@ -433,6 +436,11 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
               </div>
             </motion.div>
               </>
+            )}
+
+            {/* Settings Tab */}
+            {activeTab === 'settings' && (
+              <SettingsPage user={user} onUpdate={onUserUpdate} onLogout={onLogout} />
             )}
 
             {/* Mi Contenido Tab */}
